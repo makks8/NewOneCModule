@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\CRM\Behavior;
+namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
 use App\Models\CRM\EntityBehavior;
@@ -16,21 +16,7 @@ class DefaultBehavior implements EntityBehavior
         return Bitrix::request($method, $entityData);
     }
 
-
-    public function getParams($entity)
-    {
-        $data = $entity->getData();
-        $params = ['FIELDS' => $data];
-
-        if ($entity->entityExists()) {
-            $params['id'] = $entity->bitrix_id;
-        }
-        return $params;
-    }
-
-
-
-    public function getEntityData($entity)
+    public function getOneCParams($entity):array
     {
         $method = 'crm.' . $entity->name . '.get';
         $params = ['id' => $entity->bitrix_id];

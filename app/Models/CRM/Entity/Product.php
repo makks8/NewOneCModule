@@ -2,7 +2,7 @@
 
 namespace App\Models\CRM\Entity;
 
-use App\Models\CRM\Behavior\ProductBehavior;
+use App\Models\CRM\Behaviors\ProductBehavior;
 use App\Models\CRM\CRM;
 
 class Product extends CRM

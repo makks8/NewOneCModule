@@ -6,7 +6,7 @@ interface EntityBehavior
 {
     public function add(CRM $entity);
 
-    public function getParams(CRM $entity);
+    //public function getCRMParams(CRM $entity);
 
-    public function getEntityData($id);
+    public function getOneCParams(CRM $entity): array;
 }

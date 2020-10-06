@@ -8,76 +8,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class ListsElement extends Model
 {
-    public $name;
-    public $client_id;
-    public $element_code;
-    public $element_guid;
-    public $block_code;
+    private array $params;
+    private array $requestData;
 
-    private $params;
-
-
-    public function __construct($data = array())
+    public static function create($data)
     {
-        parent::__construct();
-        if (!empty($data)) {
-            $blockCode = $data['IBLOCK_CODE'];
-            $elementsCount = count(ListsElement::query()->where(['block_code' => $blockCode])->get());
-            $elementsCount++;
-            $this->client_id = Client::getClientId();
-            $this->block_code = $blockCode;
-            $this->element_code = $blockCode . '_element_' . $elementsCount;
-            $this->element_guid = $data['FIELDS']['GUID'];
-            $this->name = $data['FIELDS']['NAME'];
-            $this->setFields($data);
-        }
-    }
-
-    public static function getElement($data)
-    {
+        /** @var ListsElement $element */
         $element = ListsElement::query()
             ->where([
                 'element_guid' => $data['FIELDS']['GUID'],
-                'block_code' => $data['IBLOCK_CODE']])
-            ->get();
-        if (empty($element)) {
-            $element = new ListsElement($data);
-        } else {
-            $element->setFields($data);
-        }
-        return $element;
+                'block_code' => $data['IBLOCK_CODE']
+            ])
+            ->firstOrNew();
+        $element->requestData = $data;
+        if ($element->exists) $element->setProperties();
+        else $element->setParams();
+        $element->add();
     }
 
-    public static function getElementByID($blockCode, $id)
+    public static function get($data)
     {
-        return self::query()->where(['bitrix_id' => $id, 'block_code' => $blockCode])->get();
-    }
-
-    public function addElement()
-    {
-        $method = 'lists.element.add';
-        if (property_exists($this, 'id')) {
-            $method = 'lists.element.update';
-        }
-        $data = $this->getParams();
-        $listsBlock = ListsBlock::getBlock($this);
-        $fields = $listsBlock->fields;
-        $fields = json_decode($fields, true);
-
-        foreach ($data['FIELDS'] as $fieldName => $value) {
-            if (!empty($fields[$fieldName])) {
-                $fieldID = $fields[$fieldName];
-                $data['FIELDS'][$fieldID] = $value;
-                unset($data['FIELDS'][$fieldName]);
-            } else {
-                continue;
-            }
-        }
-
-        $response = Bitrix::request($method, $data);
-        if (!empty($response)) {
-            $this->save();
-        }
+        return self::query()->where([
+            'bitrix_id' => $data['ELEMENT_ID'],
+            'block_code' => $data['BLOCK_CODE']
+        ])->first();
     }
 
     public function getParams()
@@ -85,10 +39,14 @@ class ListsElement extends Model
         return $this->params;
     }
 
-    private function setFields($data)
+    private function add()
     {
-        $this->params = $data['FIELDS'];
-        $this->setParams();
+        $method = $this->exists ? 'update' : 'add';
+        $params = ListsBlock::get($this)->mapFieldsWithParams();
+        $response = Bitrix::request('lists.element.' . $method, $params);
+        if (!empty($response)) {
+            $this->save();
+        }
     }
 
     private function getElementData()
@@ -99,13 +57,29 @@ class ListsElement extends Model
         return $response[0];
     }
 
+    private function setProperties()
+    {
+        $blockCode = $this->requestData['IBLOCK_CODE'];
+        $elementsCount = count(ListsElement::query()->where(['block_code' => $blockCode])->get());
+        $elementsCount++;
+        $this->fill([
+            'client_id' => Client::getClientId(),
+            'block_code' => $blockCode,
+            'element_code' => $blockCode . '_element_' . $elementsCount,
+            'element_guid' => $this->requestData['FIELDS']['GUID'],
+            'name' => $this->requestData['FIELDS']['NAME']
+        ]);
+
+        $this->setParams();
+    }
+
     private function setParams()
     {
         $this->params = array(
             'IBLOCK_TYPE_ID' => 'lists',
             'IBLOCK_CODE' => $this->block_code,
             'ELEMENT_CODE' => $this->element_code,
-            'FIELDS' => $this->params
+            'FIELDS' => $this->requestData['FIELDS']
         );
     }
 }

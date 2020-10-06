@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CRMController;
+use App\Http\Controllers\ListsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,4 +23,9 @@ Route::get('/', function () {
 Route::get('crm.sync', [CRMController::class, 'sync']);
 Route::get('crm.test', [CRMController::class, 'test']);
 Route::post('crm.add.company', [CRMController::class, 'addCompany']);
+#endregion
+
+#region Lists
+Route::post('lists.add.elements', [ListsController::class, 'addElements']);
+Route::post('lists.get.element', [ListsController::class, 'getElement']);
 #endregion

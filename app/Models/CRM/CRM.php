@@ -3,18 +3,17 @@
 namespace App\Models\CRM;
 
 use App\Models\Client;
+use App\Models\Event;
 use App\Models\OneC;
+use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
+use phpDocumentor\Reflection\Types\Mixed_;
+
 
 class CRM extends Model
 {
-    public $name;
-    public $description;
-    public $guid;
-    public $bitrix_id;
-    public $client_id;
+    use ModelTrait;
 
-    private $eventsList;
     private $data;
     protected $table = 'crm';
 
@@ -31,46 +30,37 @@ class CRM extends Model
 
     /**
      * @param string $guid
-     * @return CRM
+     * @return mixed|CRM
      */
-    public static function getEntityByGuid(string $guid): CRM
+    public static function getByGuid(string $guid)
     {
         /** @var CRM $class */
         $class = get_called_class();
-
-        /** @var  CRM $entity */
-
-        $entity = $class::query()->where(['guid' => $guid])->getModel();
-
+        return $class::query()->where(['guid' => $guid])->firstOrNew();
     }
 
     /**
-     * @param $bitrixID
-     * @return mixed|string
+     * @param string $crmID
+     * @return CRM
      */
-    public static function getEntityByID($bitrixID)
+    public static function getByID(string $crmID): CRM
     {
-        /**@var CRM $entity */
         $entityName = basename(get_called_class());
-        $entity = self::find()->where(['name' => $entityName, 'bitrix_id' => $bitrixID])->one();
-        if (empty($entity)) {
-            $entity = get_called_class();
-            $entity = new $entity;
-            $entity->bitrix_id = $bitrixID;
-            $entity->sendEntityToOneC();
-        }
+        /**@var CRM $entity */
+        $entity = self::query()->where(['name' => $entityName, 'crm_id' => $crmID])->firstOrNew();
+        if (!$entity->exists) $entity->sendToOneC();
         return $entity;
     }
 
-    public static function getBitrixID($entityGUID)
+    public static function getID(string $entityGUID): int
     {
-        $entity = self::getEntityByGUID($entityGUID);
-        return $entity->bitrix_id;
+        $entity = self::getByGUID($entityGUID);
+        return $entity->crm_id;
     }
 
-    public function sendEntityToOneC()
+    public function sendToOneC()
     {
-        $data = $this->getEntityData();
+        $data = $this->getOneCParams();
         $response = OneC::request($this->name, $data);
         $this->guid = $response['guid'];
         $this->save();
@@ -78,22 +68,18 @@ class CRM extends Model
 
     public function addEntity()
     {
-        $bitrixID = $this->entityBehavior->add($this);
-        if ($this->entityExists()) {
-            $this->bitrix_id = $bitrixID;
+        $crmID = $this->entityBehavior->add($this);
+        if ($this->exists) {
+            $this->crm_id = $crmID;
             $this->save();
         }
     }
 
-    public function entityExists()
-    {
-        return property_exists($this, 'id');
-    }
-
-
     public function getParams()
     {
-        return $this->entityBehavior->getParams($this);
+        $params = ['FIELDS' => $this->getData()];
+        if ($this->exists) $params['id'] = $this->crm_id;
+        return $params;
     }
 
     public function getData()
@@ -103,17 +89,14 @@ class CRM extends Model
 
     public function getMethod()
     {
-        $entityName = $this->name;
-        $method = "crm.$entityName.add";
-        if ($this->entityExists()) {
-            $method = "crm.$entityName.update";
-        }
-        return $method;
+        $method = 'crm.' . $this->name;
+        if ($this->exists) return $method . '.update';
+        return $method . '.add';
     }
 
-    public function getEntityData()
+    public function getOneCParams()
     {
-        return $this->entityBehavior->getEntityData($this);
+        return $this->entityBehavior->getOneCParams($this);
     }
 
 
@@ -140,6 +123,12 @@ class CRM extends Model
     protected function setEntityBehavior(EntityBehavior $entityBehavior): void
     {
         $this->entityBehavior = $entityBehavior;
+    }
+
+    private function checkEvents($method)
+    {
+        $eventName = 'OnCrm' . $this->name . $method;
+        return Event::offlineEventGet($eventName);
     }
 
 }

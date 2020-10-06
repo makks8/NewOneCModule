@@ -2,7 +2,7 @@
 
 namespace App\Models\CRM\Entity;
 
-use App\Models\CRM\Behavior\CompanyBehavior;
+use App\Models\CRM\Behaviors\CompanyBehavior;
 
 use App\Models\CRM\CRM;
 

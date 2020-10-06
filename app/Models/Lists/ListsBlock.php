@@ -7,56 +7,56 @@ use Illuminate\Database\Eloquent\Model;
 
 class ListsBlock extends Model
 {
-    public $block_id;
-    public $block_code;
-    public $fields;
+    private ListsElement $element;
 
-    private $params;
-
-    /**
-     * ListsBlock constructor.
-     * @param ListsElement $element
-     */
-    public function __construct($element = null)
+    public static function get($element)
     {
-        parent::__construct();
-        if (!empty($element)) {
-            $this->block_code = $element->block_code;
-            $this->params = $element->getParams();
+        /** @var ListsBlock $listsBlock */
+        $listsBlock = self::query()->where(['block_code' => $element->block_code])->firstOrNew();
+        $listsBlock->element = $element;
+        if (!$listsBlock->exists) $listsBlock->create();
+        return $listsBlock;
+    }
+
+    public function mapFieldsWithParams(): array
+    {
+        $fields = json_decode($this->fields, true);
+        $params = $this->element->getParams();
+
+        foreach ($params['FIELDS'] as $fieldName => $value) {
+            if (!empty($fields[$fieldName])) {
+                $fieldID = $fields[$fieldName];
+                $params['FIELDS'][$fieldID] = $value;
+                unset($params['FIELDS'][$fieldName]);
+            } else {
+                continue;
+            }
         }
+        return $params;
     }
 
-    public static function tableName()
-    {
-        return 'lists_block';
-    }
-
-    public static function getBlock($element)
-    {
-        $listsBlock = self::query()->where(['block_code' => $element->block_code])->get();
-        if (empty($listsBlock)) {
-            $listsBlock = new ListsBlock($element);
-            $listsBlock->createList();
-            return $listsBlock;
-        } else {
-            return $listsBlock;
-        }
-    }
-
-    private function createList()
+    private function create()
     {
         $method = 'lists.add';
-        $params = $this->params;
-        $params['FIELDS']['NAME'] = $this->block_code;
+
+        $blockCode = $this->element->block_code;
+        $params = $this->element->getParams();
+        $params['FIELDS']['NAME'] = $blockCode;
+
         $blockID = Bitrix::request($method, $params);
-        $this->block_id = $blockID;
+
         $fields = $params['FIELDS'];
         unset($fields['NAME']);
         foreach ($fields as $fieldName => $value) {
             $fieldID = $this->addField($fieldName, $value);
-            $this->fields[$fieldName] = $fieldID;
+            $fields[$fieldName] = $fieldID;
         }
-        $this->fields = json_encode($this->fields);
+
+        $this->fill([
+            'fields' => json_encode($fields),
+            'block_id' => $blockID,
+            'block_code' => $blockCode
+        ]);
         $this->save();
     }
 
@@ -67,7 +67,7 @@ class ListsBlock extends Model
         if (is_numeric($value)) {
             $type = 'N';
         }
-        $params = $this->params;
+        $params = $this->element->getParams();
         $params['FIELDS'] = [
             'NAME' => $fieldName,
             'TYPE' => $type,
@@ -76,4 +76,6 @@ class ListsBlock extends Model
         ];
         return Bitrix::request($method, $params);
     }
+
+
 }

@@ -13,7 +13,7 @@ class CRMController extends Controller
     public function addCompany(Request $request)
     {
         if ($request->exists('GUID')) {
-            Company::getEntityByGUID($request['GUID'])->addEntity();
+            Company::getByGUID($request['GUID'])->addEntity();
         }
     }
 
@@ -21,7 +21,7 @@ class CRMController extends Controller
     {
         $data = json_decode($_POST['data'], true);
         $guid = $data['GUID'];
-        $company = Product::getEnitityByGUID($guid, $data);
+        $company = Product::getByGUID($guid, $data);
         $company->addEntity();
     }
 

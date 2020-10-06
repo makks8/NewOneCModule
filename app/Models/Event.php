@@ -72,20 +72,13 @@ class Event extends Model
         }
     }
 
-//    public static function hasChanges($entities, $method)
-//    {
-//        if (empty($entities)) {
-//            echo nl2br($method . PHP_EOL . ' Нет изменений на портале.' . PHP_EOL);
-//            return false;
-//        } else {
-//            return true;
-//        }
-//    }
-
-    private function checkEvents($method)
+    public static function hasChanges($entities, $method)
     {
-        $eventName = 'OnCrm' . $this->name . $method;
-        return Event::offlineEventGet($eventName);
+        if (empty($entities)) {
+            echo nl2br($method . PHP_EOL . ' Нет изменений на портале.' . PHP_EOL);
+            return false;
+        } else {
+            return true;
+        }
     }
-
 }

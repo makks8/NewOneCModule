@@ -2,7 +2,7 @@
 
 namespace App\Models\CRM\Entity;
 
-use App\Models\CRM\Behavior\DealBehavior;
+use App\Models\CRM\Behaviors\DealBehavior;
 use App\Models\CRM\CRM;
 
 class Deal extends CRM
@@ -40,8 +40,8 @@ class Deal extends CRM
         if (Event::hasChanges($entities, __FUNCTION__)) {
             echo __FUNCTION__ . '<br>';
             foreach ($entities as $entityID) {
-                $entity = Deal::getEntityByID($entityID);
-                $entity->sendEntityToOneC();
+                $entity = Deal::getByID($entityID);
+                $entity->sendToOneC();
                 echo nl2br($this->name . " $entityID updated." . PHP_EOL);
             }
         }

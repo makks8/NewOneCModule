@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\CRM\Behavior;
+namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
 use App\Models\CRM\EntityBehavior;
@@ -8,36 +8,25 @@ use App\Models\CRM\EntityBehavior;
 class ProductBehavior implements EntityBehavior
 {
 
-    public function add($entity)
+    public function add($product)
     {
-        $entityData = $entity->getParams();
-        $vatRate = $entityData['fields']['VAT_ID'];
-        $catalogSections = $entityData['fields']['SECTION_ID'];
-        $measureCode = $entityData['fields']['MEASURE'];
-        $entityData['fields']['VAT_ID'] = self::getVatID($vatRate);
-        $entityData['fields']['SECTION_ID'] = self::getSectionID($catalogSections);
-        $entityData['fields']['MEASURE'] = self::getMeasureID($measureCode);
+        $params = $product->getParams();
+        $vatRate = $params['fields']['VAT_ID'];
+        $catalogSections = $params['fields']['SECTION_ID'];
+        $measureCode = $params['fields']['MEASURE'];
+        $params['fields']['VAT_ID'] = self::getVatID($vatRate);
+        $params['fields']['SECTION_ID'] = self::getSectionID($catalogSections);
+        $params['fields']['MEASURE'] = self::getMeasureID($measureCode);
 
-        $method = $entity->getMethod();
+        $method = $product->getMethod();
 
-        return Bitrix::request($method, $entityData);
+        return Bitrix::request($method, $params);
     }
 
-    public function getParams($entity)
+    public function getOneCParams($product): array
     {
-        $data = $entity->getData();
-        $params = ['fields' => $data];
-
-        if ($entity->entityExists()) {
-            $params['id'] = $entity->bitrix_id;
-        }
-        return $params;
-    }
-
-    public function getEntityData($entity)
-    {
-        $method = 'crm.' . $entity->name . '.get';
-        $params = ['id' => $entity->bitrix_id];
+        $method = 'crm.' . $product->name . '.get';
+        $params = ['id' => $product->crm_id];
 
         return Bitrix::request($method, $params);
     }
