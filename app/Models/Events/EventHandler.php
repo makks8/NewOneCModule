@@ -1,16 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Events;
 
+use App\Models\Bitrix;
 use App\Models\Util\Util;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use function MongoDB\BSON\toJSON;
-use function MongoDB\BSON\toPHP;
 
-class Event extends Model
+class EventHandler
 {
-    use HasFactory;
 
     public static function eventList($scope)
     {
@@ -26,7 +23,7 @@ class Event extends Model
         ];
         $response = Bitrix::request('event.offline.get', $data);
         $arrOfDealId = array();
-        $events = array(
+        /*$events = array(
             0 =>
                 array(
                     'ID' => '365',
@@ -36,7 +33,7 @@ class Event extends Model
                         array(
                             'FIELDS' =>
                                 array(
-                                    'ID' => 49,
+                                    'ID' => 60,
                                 ),
                         ),
                     'EVENT_ADDITIONAL' =>
@@ -45,9 +42,9 @@ class Event extends Model
                         ),
                     'MESSAGE_ID' => '634959bd00d83c392c34d5e804d5682a',
                 )
-        );
+        );*/
 
-        foreach (/*$response['events']*/ $events as $value) {
+        foreach ($response['events'] as $value) {
             $arrOfDealId[] = $value['EVENT_DATA']['FIELDS']['ID'];
         }
         return $arrOfDealId;
@@ -72,7 +69,7 @@ class Event extends Model
         }
     }
 
-    public static function hasChanges($entities, $method)
+    public static function entityHasChanges($entities, $method)
     {
         if (empty($entities)) {
             echo nl2br($method . PHP_EOL . ' Нет изменений на портале.' . PHP_EOL);
@@ -80,5 +77,38 @@ class Event extends Model
         } else {
             return true;
         }
+    }
+
+    public static function synchronizeEntity($entity): void
+    {
+        $methods = get_class_methods($entity);
+        $entityName = basename($entity);
+        echo nl2br('Сущность ' . $entityName . PHP_EOL . PHP_EOL);
+
+        flush();
+        ob_flush();
+        foreach ($methods as $method) {
+            $result = strpos($method, 'onCrm');
+            if ($result !== false && $result == 0) {
+                $data = self::checkEvents($entityName, $method);
+
+                if (empty($data)) {
+                    echo nl2br($method . PHP_EOL . ' Нет изменений на портале.' . PHP_EOL);
+                } else {
+                    $entity::$method($data);
+                }
+
+                echo '<br>';
+                flush();
+                ob_flush();
+            }
+        }
+    }
+
+    private static function checkEvents(string $entityName, string $method): array
+    {
+        $method = str_replace('onCrm', '', $method);
+        $eventName = 'OnCrm' . $entityName . $method;
+        return EventHandler::offlineEventGet($eventName);
     }
 }

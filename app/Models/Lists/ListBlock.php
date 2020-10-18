@@ -5,13 +5,19 @@ namespace App\Models\Lists;
 use App\Models\Bitrix;
 use Illuminate\Database\Eloquent\Model;
 
-class ListsBlock extends Model
+class ListBlock extends Model
 {
-    private ListsElement $element;
+    protected $fillable = [
+        'fields',
+        'block_id',
+        'block_code'
+    ];
+
+    private ListElement $element;
 
     public static function get($element)
     {
-        /** @var ListsBlock $listsBlock */
+        /** @var ListBlock $listsBlock */
         $listsBlock = self::query()->where(['block_code' => $element->block_code])->firstOrNew();
         $listsBlock->element = $element;
         if (!$listsBlock->exists) $listsBlock->create();
@@ -33,6 +39,11 @@ class ListsBlock extends Model
             }
         }
         return $params;
+    }
+
+    public function setElement($element)
+    {
+        $this->element = $element;
     }
 
     private function create()

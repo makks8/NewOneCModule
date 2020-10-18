@@ -8,7 +8,7 @@ use App\Models\CRM\EntityBehavior;
 class DefaultBehavior implements EntityBehavior
 {
 
-    public function add($entity)
+    public function sendToCrm($entity)
     {
         $entityData = $entity->getData();
         $method = $entity->getMethod();

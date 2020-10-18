@@ -8,7 +8,7 @@ use App\Models\CRM\EntityBehavior;
 class CompanyBehavior implements EntityBehavior
 {
 
-    public function add($company)
+    public function sendToCrm($company)
     {
         $params = $company->getParams();
         $method = $company->getMethod();

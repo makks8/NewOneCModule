@@ -5,33 +5,41 @@ namespace App\Models\Lists;
 use App\Models\Bitrix;
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
-class ListsElement extends Model
+class ListElement extends Model
 {
+    protected $fillable = [
+        'client_id',
+        'block_code',
+        'element_code',
+        'element_guid',
+        'name'
+    ];
+
     private array $params;
     private array $requestData;
+    private static ListBlock $block;
 
     public static function create($data)
     {
-        /** @var ListsElement $element */
-        $element = ListsElement::query()
+        /** @var ListElement $element */
+        $element = ListElement::query()
             ->where([
                 'element_guid' => $data['FIELDS']['GUID'],
                 'block_code' => $data['IBLOCK_CODE']
             ])
             ->firstOrNew();
         $element->requestData = $data;
-        if ($element->exists) $element->setProperties();
+        if (!$element->exists) $element->setProperties();
         else $element->setParams();
+        self::setBlock($element);
         $element->add();
     }
 
-    public static function get($data)
+    public static function get($where)
     {
-        return self::query()->where([
-            'bitrix_id' => $data['ELEMENT_ID'],
-            'block_code' => $data['BLOCK_CODE']
-        ])->first();
+        return self::query()->where($where)->first();
     }
 
     public function getParams()
@@ -42,11 +50,12 @@ class ListsElement extends Model
     private function add()
     {
         $method = $this->exists ? 'update' : 'add';
-        $params = ListsBlock::get($this)->mapFieldsWithParams();
+        $params = self::$block->mapFieldsWithParams();
         $response = Bitrix::request('lists.element.' . $method, $params);
-        if (!empty($response)) {
-            $this->save();
+        if (!$this->exists && $response) {
+            $this->element_id = $response;
         }
+        $this->save();
     }
 
     private function getElementData()
@@ -60,10 +69,10 @@ class ListsElement extends Model
     private function setProperties()
     {
         $blockCode = $this->requestData['IBLOCK_CODE'];
-        $elementsCount = count(ListsElement::query()->where(['block_code' => $blockCode])->get());
+        $elementsCount = count(ListElement::query()->where(['block_code' => $blockCode])->get());
         $elementsCount++;
         $this->fill([
-            'client_id' => Client::getClientId(),
+            'client_id' => Client::getID(),
             'block_code' => $blockCode,
             'element_code' => $blockCode . '_element_' . $elementsCount,
             'element_guid' => $this->requestData['FIELDS']['GUID'],
@@ -81,5 +90,14 @@ class ListsElement extends Model
             'ELEMENT_CODE' => $this->element_code,
             'FIELDS' => $this->requestData['FIELDS']
         );
+    }
+
+    private static function setBlock($element): void
+    {
+        if (empty(self::$block) || self::$block->block_code != $element->block_code) {
+            self::$block = ListBlock::get($element);
+        } else {
+            self::$block->setElement($element);
+        }
     }
 }

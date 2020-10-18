@@ -2,40 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
 use App\Models\Bitrix;
-use App\Models\CRM\Entity\Company;
-use Illuminate\Http\Request;
+use App\Models\CRM\Crm;
+use App\Models\CRM\Entities\Company;
+use App\Models\CRM\Entities\Deal;
+use App\Models\CRM\Entities\Product;
+use App\Models\OneC;
+
 
 class CRMController extends Controller
 {
 
-    public function addCompany(Request $request)
+    public function addCompany()
     {
-        if ($request->exists('GUID')) {
-            Company::getByGUID($request['GUID'])->addEntity();
-        }
+        Company::sendToCrm();
     }
 
     public function addProduct()
     {
-        $data = json_decode($_POST['data'], true);
-        $guid = $data['GUID'];
-        $company = Product::getByGUID($guid, $data);
-        $company->addEntity();
+        Product::sendToCrm();
     }
 
     public function getID()
     {
-        $data = json_decode($_POST['data'], true);
-        $guid = $data['GUID'];
-        echo CRM::getBitrixID($guid);
+        $data = OneC::getData();
+        $id = Crm::getID($data['GUID']);
+        return response($id, 200)
+            ->header('Content-Type', 'application/json');
     }
 
     public function sync()
     {
-        $client = Client::getClient();
-        $client->getAccessToken();
+        Deal::startSync();
     }
 
     public function test()

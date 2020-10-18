@@ -14,8 +14,4 @@ class Util
         flush();
         ob_flush();
     }
-
-    public static function firstOrNew(){
-
-    }
 }

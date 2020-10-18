@@ -9,17 +9,28 @@ use Illuminate\Support\Facades\Http;
 class Client extends Model
 {
 
+    protected $fillable = [
+        'refresh_token',
+        'access_token',
+        'expires_in'
+    ];
+
     private static Client $client;
 
     public static function getClient(): Client
     {
-        $clientID = self::getClientId();
+        $clientID = self::getID();
         if (empty(self::$client)) {
             /** @var Client $client */
             $client = self::query()->findOrFail($clientID);
             self::$client = $client;
         }
         return self::$client;
+    }
+
+    public static function getClientsList()
+    {
+        return self::query()->get()->all();
     }
 
     public static function getWebHook(): string
@@ -29,6 +40,7 @@ class Client extends Model
 
     public function getAccessToken(): string
     {
+
         if (time() > $this->expires_in) {
 
             $url = 'https://oauth.bitrix.info/oauth/token/?grant_type=refresh_token' .
@@ -42,13 +54,13 @@ class Client extends Model
                 abort(404);
             }
 
-            $this->refresh_token = $response['refresh_token'];
-            $this->access_token = $response['access_token'];
-            $this->expires_in = time() + $response['expires_in'];
-            $this->save();
+            $this->fill([
+                'refresh_token' => $response['refresh_token'],
+                'access_token' => $response['access_token'],
+                'expires_in' => time() + $response['expires_in']
+            ])->save();
 
             $accessToken = $response['access_token'];
-
         } else {
             $accessToken = $this->access_token;
         }
@@ -56,8 +68,9 @@ class Client extends Model
         return '?auth=' . $accessToken;
     }
 
-    public static function getClientId(): int
+    public static function getID(): int
     {
-        return request()['client_id'];
+        if (request()->exists('client_id')) return request('client_id');
+        abort('404', 'ClientID not found!');
     }
 }

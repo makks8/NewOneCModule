@@ -18,4 +18,10 @@ class OneC
             $client->onec_password
         )->$method($url, $data);
     }
+
+    public static function getData(): array
+    {
+        $data = json_decode(request()->post('data'), true);
+        return empty($data) ? [] : $data;
+    }
 }

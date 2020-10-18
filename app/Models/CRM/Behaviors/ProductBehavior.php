@@ -8,15 +8,17 @@ use App\Models\CRM\EntityBehavior;
 class ProductBehavior implements EntityBehavior
 {
 
-    public function add($product)
+    public function sendToCrm($product)
     {
         $params = $product->getParams();
-        $vatRate = $params['fields']['VAT_ID'];
-        $catalogSections = $params['fields']['SECTION_ID'];
-        $measureCode = $params['fields']['MEASURE'];
-        $params['fields']['VAT_ID'] = self::getVatID($vatRate);
-        $params['fields']['SECTION_ID'] = self::getSectionID($catalogSections);
-        $params['fields']['MEASURE'] = self::getMeasureID($measureCode);
+        $fields = $params['FIELDS'];
+        $vatRate = $fields['VAT_ID'];
+        $catalogSections = $fields['SECTION_ID'];
+        $measureCode = $fields['MEASURE'];
+        $fields['VAT_ID'] = self::getVatID($vatRate);
+        $fields['SECTION_ID'] = self::getSectionID($catalogSections);
+        $fields['MEASURE'] = self::getMeasureID($measureCode);
+        $params['FIELDS'] = $fields;
 
         $method = $product->getMethod();
 

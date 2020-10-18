@@ -2,22 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Lists\ListsElement;
+use App\Models\Lists\ListElement;
+use App\Models\OneC;
 use Illuminate\Http\Request;
+use PHPUnit\Util\Json;
 
 class ListsController extends Controller
 {
-    public function addElements(Request $request)
+    public function addElements()
     {
-        $elements = $request->post(['data']);
+        $elements = OneC::getData();
         foreach ($elements as $elementData) {
-            ListsElement::create($elementData);
+            ListElement::create($elementData);
         }
     }
 
-    public function getElement(Request $request)
+    public function getElement()
     {
-        $list = ListsElement::get($request->post(['data']));
-        echo $list->element_guid;
+        $data = OneC::getData();
+        $element = ListElement::get($data);
+        return response($element->element_guid, 200,)
+            ->header('Content-Type', 'application/json');
     }
+
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CRMController;
 use App\Http\Controllers\ListsController;
 use Illuminate\Support\Facades\Route;
@@ -19,10 +20,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-#region CRM
+#region Client
+Route::get('clients-list', [ClientController::class, 'renderClientList']);
+#endregion
+
+#region Crm
 Route::get('crm.sync', [CRMController::class, 'sync']);
 Route::get('crm.test', [CRMController::class, 'test']);
 Route::post('crm.add.company', [CRMController::class, 'addCompany']);
+Route::post('crm.add.product', [CRMController::class, 'addProduct']);
+Route::post('crm.get.id', [CRMController::class, 'getID']);
 #endregion
 
 #region Lists

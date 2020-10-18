@@ -3,18 +3,18 @@
 namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
-use App\Models\CRM\Entity\Company;
-use App\Models\CRM\Entity\Product;
+use App\Models\CRM\Entities\Company;
+use App\Models\CRM\Entities\Product;
 use App\Models\CRM\EntityBehavior;
 
 class DealBehavior implements EntityBehavior
 {
-    public function add($entity)
+    public function sendToCrm($entity)
     {
 
     }
 
-    public function getOneCParams($deal):array
+    public function getOneCParams($deal): array
     {
         $method = 'crm.' . $deal->name;
         $params = ['id' => $deal->crm_id];
