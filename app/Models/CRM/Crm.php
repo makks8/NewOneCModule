@@ -4,6 +4,7 @@ namespace App\Models\CRM;
 
 use App\Models\Client;
 use App\Models\Events\EventHandler;
+use App\Models\Lists\ListElement;
 use App\Models\OneC;
 use App\Traits\ModelTrait;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ class Crm extends Model
     protected $table = 'crm';
 
     private $data;
+    private array $params;
     private EntityBehavior $entityBehavior;
 
     public function __construct(array $attributes = [])
@@ -37,6 +39,7 @@ class Crm extends Model
     {
         $data = $this->getOneCParams();
         $response = OneC::request($this->name, $data);
+
         $this->guid = $response['guid'];
         $this->save();
     }
@@ -45,11 +48,16 @@ class Crm extends Model
     {
         $data = OneC::getData();
         $guid = $data['GUID'];
-        $description = empty($data['NAME']) ? $data['TITLE'] : $data['NAME'];
+        if (key_exists('NAME', $data)) {
+            $description = $data['NAME'];
+        } else if (key_exists('TITLE', $data)) {
+            $description = $data['TITLE'];
+        }
+
 
         $entity = self::getByGUID($guid);
-        $entity->data = $data;
-        $entity->description = $description;
+        $entity->setParams($data);
+        if (!empty($description)) $entity->description = $description;
 
         $crmId = $entity->entityBehavior->sendToCrm($entity);
         if (!$entity->exists) {
@@ -93,12 +101,6 @@ class Crm extends Model
         return $entity->crm_id;
     }
 
-    public function getParams(): array
-    {
-        $params = ['FIELDS' => $this->data];
-        if ($this->exists) $params['id'] = $this->crm_id;
-        return $params;
-    }
 
     public function getMethod()
     {
@@ -112,11 +114,38 @@ class Crm extends Model
         return $this->entityBehavior->getOneCParams($this);
     }
 
+    public function getParams()
+    {
+        return $this->params;
+    }
+
     #endregion
 
     protected function setEntityBehavior(EntityBehavior $entityBehavior): void
     {
         $this->entityBehavior = $entityBehavior;
+    }
+
+    private function setParams($data): void
+    {
+        $this->params = array();
+        if ($this->exists) $this->params['id'] = $this->crm_id;
+
+        if (key_exists('LIST_ELEMENTS', $data)) {
+            foreach ($data['LIST_ELEMENTS'] as $fieldName => $fieldData) {
+                if (is_array($fieldData)) {
+                    foreach ($fieldData as $key => $multipleFieldData) {
+                        $listElement = ListElement::get($multipleFieldData);
+                        $data[$fieldName][$key] = $listElement->element_id;
+                    }
+                } else {
+                    $listElement = ListElement::get($fieldData);
+                    $data[$fieldName] = $listElement->element_id;
+                }
+            }
+            unset($data['LIST_ELEMENTS']);
+        }
+        $this->params['FIELDS'] = $data;
     }
 
     private function prepareAttributesArr($attributes = [])

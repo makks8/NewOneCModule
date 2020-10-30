@@ -23,6 +23,11 @@ class CRMController extends Controller
         Product::sendToCrm();
     }
 
+    public function addDeal()
+    {
+        Deal::sendToCrm();
+    }
+
     public function getID()
     {
         $data = OneC::getData();

@@ -57,7 +57,7 @@ class Client extends Model
             $this->fill([
                 'refresh_token' => $response['refresh_token'],
                 'access_token' => $response['access_token'],
-                'expires_in' => time() + $response['expires_in']
+                'expires_in' => $response['expires']
             ])->save();
 
             $accessToken = $response['access_token'];

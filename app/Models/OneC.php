@@ -24,4 +24,8 @@ class OneC
         $data = json_decode(request()->post('data'), true);
         return empty($data) ? [] : $data;
     }
+
+    public static function stringIsGuid(string $guid){
+        return preg_match("/^[a-f\d]{8}(-[a-f\d]{4}){4}[a-f\d]{8}$/i", $guid);
+    }
 }

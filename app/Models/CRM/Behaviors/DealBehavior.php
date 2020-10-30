@@ -9,9 +9,33 @@ use App\Models\CRM\EntityBehavior;
 
 class DealBehavior implements EntityBehavior
 {
-    public function sendToCrm($entity)
+    public function sendToCrm($deal)
     {
+        $params = $deal->getParams();
+        $method = $deal->getMethod();
+        $productRows = $params['FIELDS']['PRODUCTS'];
+        unset($params['FIELDS']['PRODUCTS']);
 
+        $result = Bitrix::request($method, $params);
+
+        $dealID = $deal->exists ? $deal->crm_id : $result;
+
+        foreach ($productRows as $count => $productRow) {
+            $product = Product::getByGuid($productRow['GUID']);
+            $productRows[$count]['PRODUCT_ID'] = $product->crm_id;
+            unset($productRows[$count]['GUID']);
+        }
+
+        $params = [
+            'id' => $dealID,
+            'rows' => $productRows
+        ];
+
+        $method = 'crm.deal.productrows.set';
+
+        Bitrix::request($method, $params);
+
+        return $result;
     }
 
     public function getOneCParams($deal): array

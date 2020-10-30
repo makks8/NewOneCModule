@@ -35,8 +35,8 @@ class Deal extends Crm
     public static function onCrmUpdate($entities)
     {
         foreach ($entities as $entityID) {
-            //$entity = Deal::getByID($entityID);
-            //$entity->sendToOneC();
+            $entity = Deal::getByID($entityID);
+            $entity->sendToOneC();
         }
     }
 

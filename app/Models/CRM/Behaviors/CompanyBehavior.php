@@ -3,12 +3,14 @@
 namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
+use App\Models\CRM\Crm;
+use App\Models\CRM\Entities\Company;
 use App\Models\CRM\EntityBehavior;
 
 class CompanyBehavior implements EntityBehavior
 {
 
-    public function sendToCrm($company)
+    public function sendToCrm(Crm $company)
     {
         $params = $company->getParams();
         $method = $company->getMethod();

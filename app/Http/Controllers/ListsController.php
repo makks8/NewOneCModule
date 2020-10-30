@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Lists\ListElement;
 use App\Models\OneC;
-use Illuminate\Http\Request;
-use PHPUnit\Util\Json;
 
 class ListsController extends Controller
 {
@@ -21,7 +19,7 @@ class ListsController extends Controller
     {
         $data = OneC::getData();
         $element = ListElement::get($data);
-        return response($element->element_guid, 200,)
+        return response($element->getAttributes(), 200,)
             ->header('Content-Type', 'application/json');
     }
 

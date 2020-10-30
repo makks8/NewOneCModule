@@ -29,6 +29,7 @@ Route::get('crm.sync', [CRMController::class, 'sync']);
 Route::get('crm.test', [CRMController::class, 'test']);
 Route::post('crm.add.company', [CRMController::class, 'addCompany']);
 Route::post('crm.add.product', [CRMController::class, 'addProduct']);
+Route::post('crm.add.deal', [CRMController::class, 'addDeal']);
 Route::post('crm.get.id', [CRMController::class, 'getID']);
 #endregion
 
