@@ -34,7 +34,7 @@ class Crm extends Model
         EventHandler::synchronizeEntity(get_called_class());
     }
 
-
+    #region send functions
     public function sendToOneC()
     {
         $data = $this->getOneCParams();
@@ -48,24 +48,25 @@ class Crm extends Model
     {
         $data = OneC::getData();
         $guid = $data['GUID'];
+        $entity = self::getByGUID($guid);
+        $entity->setParams($data);
+        $entity->guid = $guid;
+
         if (key_exists('NAME', $data)) {
             $description = $data['NAME'];
         } else if (key_exists('TITLE', $data)) {
             $description = $data['TITLE'];
+        } else if (!empty($description)) {
+            $entity->description = $description;
         }
-
-
-        $entity = self::getByGUID($guid);
-        $entity->setParams($data);
-        if (!empty($description)) $entity->description = $description;
 
         $crmId = $entity->entityBehavior->sendToCrm($entity);
         if (!$entity->exists) {
             $entity->crm_id = $crmId;
-            $entity->guid = $guid;
         }
         $entity->save();
     }
+    #endregion
 
     #region get functions
 
@@ -121,6 +122,7 @@ class Crm extends Model
 
     #endregion
 
+    #region set functions
     protected function setEntityBehavior(EntityBehavior $entityBehavior): void
     {
         $this->entityBehavior = $entityBehavior;
@@ -147,6 +149,7 @@ class Crm extends Model
         }
         $this->params['FIELDS'] = $data;
     }
+    #endregion
 
     private function prepareAttributesArr($attributes = [])
     {

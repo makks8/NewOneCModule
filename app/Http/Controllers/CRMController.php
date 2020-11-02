@@ -43,7 +43,7 @@ class CRMController extends Controller
 
     public function test()
     {
-        Bitrix::request('crm.deal.get', ['id' => 49]);
+        Bitrix::request('crm.deal.get', ['id' => 515]);
     }
 
 
