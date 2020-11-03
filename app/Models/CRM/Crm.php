@@ -52,6 +52,11 @@ class Crm extends Model
         $entity->setParams($data);
         $entity->guid = $guid;
 
+        $crmId = $entity->entityBehavior->sendToCrm($entity);
+        if (!$entity->exists) {
+            $entity->crm_id = $crmId;
+        }
+
         if (key_exists('NAME', $data)) {
             $description = $data['NAME'];
         } else if (key_exists('TITLE', $data)) {
@@ -60,10 +65,6 @@ class Crm extends Model
             $entity->description = $description;
         }
 
-        $crmId = $entity->entityBehavior->sendToCrm($entity);
-        if (!$entity->exists) {
-            $entity->crm_id = $crmId;
-        }
         $entity->save();
     }
     #endregion
