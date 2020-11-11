@@ -44,9 +44,9 @@ class Crm extends Model
         $this->save();
     }
 
-    public static function sendToCrm()
+    public static function sendToCrm($data):self
     {
-        $data = OneC::getData();
+
         $guid = $data['GUID'];
         $entity = self::getByGUID($guid);
         $entity->setParams($data);
@@ -61,11 +61,15 @@ class Crm extends Model
             $description = $data['NAME'];
         } else if (key_exists('TITLE', $data)) {
             $description = $data['TITLE'];
-        } else if (!empty($description)) {
+        }
+
+        if (!empty($description)) {
             $entity->description = $description;
         }
 
         $entity->save();
+
+        return $entity;
     }
     #endregion
 

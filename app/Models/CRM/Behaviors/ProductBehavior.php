@@ -12,12 +12,13 @@ class ProductBehavior implements EntityBehavior
     {
         $params = $product->getParams();
         $fields = $params['FIELDS'];
-        $vatRate = $fields['VAT_ID'];
+        $vatParams = $fields['VAT_ID'];
+        $measureParams = $fields['MEASURE'];
         $catalogSections = $fields['SECTION_ID'];
-        $measureCode = $fields['MEASURE'];
-        $fields['VAT_ID'] = self::getVatID($vatRate);
+
+        $fields['VAT_ID'] = self::getVatID($vatParams);
+        $fields['MEASURE'] = self::getMeasureID($measureParams);
         $fields['SECTION_ID'] = self::getSectionID($catalogSections);
-        $fields['MEASURE'] = self::getMeasureID($measureCode);
         $params['FIELDS'] = $fields;
 
         $method = $product->getMethod();
@@ -40,41 +41,74 @@ class ProductBehavior implements EntityBehavior
         if (empty($checkSectionResult)) {
             $sectionID = self::createParentFolders($catalogSections);
         } else {
-            $sectionID = $checkSectionResult[0]['id'];
+//            $sectionID = $checkSectionResult[0]['id'];
+            $sectionID = $checkSectionResult[0]['CATALOG_ID'];
         }
         return $sectionID;
     }
 
-    private static function getMeasureID($code)
+    /**
+     * @param array $params = [ 'CODE' => string, 'MEASURE_TITLE' => string, 'SYMBOL_RUS' => string ]
+     * @return int
+     */
+    private static function getMeasureID(array $params): int
     {
-        $method = 'catalog.measure.list';
+        $method = 'crm.measure.list';
         $filter = [
-            'select' => ['id'],
-            'filter' => ['code' => $code]
+            'select' => ['ID'],
+            'filter' => ['CODE' => $params['CODE']]
         ];
-        $response = Bitrix::request($method, $filter);
-        return $response['measures'][0]['id'];
+        $response = Bitrix::request($method, $filter)[0]['ID'];
+
+        if(empty($response)){
+            $method = 'crm.measure.add';
+            $filter = [
+                'fields' => $params
+            ];
+            $response = Bitrix::request($method, $filter);
+        }
+
+        return $response;
     }
 
-    private static function getVatID($vatRate)
+    /**
+     * @param array $params = [ 'NAME' => string, 'RATE' => string ]
+     * @return int
+     */
+    private static function getVatID(array $params): int
     {
-        $method = 'catalog.vat.list';
+        $method = 'crm.vat.list';
         $filter = [
-            'select' => ['id'],
-            'filter' => ['rate' => $vatRate]
+            'select' => ['ID'],
+            'filter' => ['RATE' => $params['RATE']]
         ];
-        $response = Bitrix::request($method, $filter);
-        return $response['vats'][0]['id'];
+        $response = Bitrix::request($method, $filter)[0]['ID'];
+
+        if(empty($response)){
+            $method = 'crm.vat.add';
+            $filter = [
+                'fields' => $params
+            ];
+            $response = Bitrix::request($method, $filter);
+        }
+
+        return $response;
     }
 
     private static function checkCatalogSection($code)
     {
-        $filter = ['iblockId' => 13, 'code' => $code];
-        $filterArray = self::createFilter('id', $filter);
-        $method = 'catalog.section.list';
+
+//        $method = 'catalog.section.list';
+//        $filter = ['iblockId' => 13, 'code' => $code];
+//        $filterArray = self::createFilter('id', $filter);
+        $method = 'crm.productsection.list';
+        $filter = ['XML_ID' => $code];
+        $filterArray = self::createFilter('CATALOG_ID', $filter);
 
         $response = Bitrix::request($method, $filterArray);
-        return $response['sections'];
+        if(empty($response)){ return null;}
+//        return $response['sections'];
+        return $response;
     }
 
     private static function createParentFolders($catalogSections)
@@ -89,19 +123,29 @@ class ProductBehavior implements EntityBehavior
                 if ($count > 0) {
                     $sectionID = $catalogSections[$count - 1];
                 }
+//                $sectionData = [
+//                    'fields' => [
+//                        'iblockId' => 13,
+//                        'iblockSectionId' => $sectionID,
+//                        'name' => $section['NAME'],
+//                        'code' => $section['CODE']
+//                    ]
+//                ];
+//                $method = 'catalog.section.add';
+
                 $sectionData = [
                     'fields' => [
-                        'iblockId' => 13,
-                        'iblockSectionId' => $sectionID,
-                        'name' => $section['NAME'],
-                        'code' => $section['CODE']
+                        'SECTION_ID' => $sectionID,
+                        'NAME' => $section['NAME'],
+                        'XML_ID' => $section['CODE']
                     ]
                 ];
-                $method = 'catalog.section.add';
+                $method = 'crm.productsection.add';
                 $response = Bitrix::request($method, $sectionData);
-                $sectionID = $response['section']['id'];
+                $sectionID = $response;
             } else {
-                $sectionID = $checkSectionResult[0]['id'];
+//                $sectionID = $checkSectionResult[0]['id'];
+                $sectionID = $checkSectionResult[0]['CATALOG_ID'];
             }
             $catalogSections[$count] = $sectionID;
         }

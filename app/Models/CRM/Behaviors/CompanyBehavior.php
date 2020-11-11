@@ -20,10 +20,10 @@ class CompanyBehavior implements EntityBehavior
 
         if (!$company->exists) {
             $requisiteRequestData = self::getRequisiteBy($requisiteParams['RQ_INN'], 'inn');
-            if (!empty($companyID)) {
-                $company->crm_id = $companyID['ENTITY_ID'];
+            if (!empty($requisiteRequestData)) {
+                $company->crm_id = $requisiteRequestData['ENTITY_ID'];
                 $company->save();
-                $companyParams['id'] = $companyID['ENTITY_ID'];
+                $companyParams['id'] = $requisiteRequestData['ENTITY_ID'];
                 $companySendMethod = $company->getMethod();
             }
         } else {
