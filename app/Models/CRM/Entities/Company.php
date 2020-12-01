@@ -2,6 +2,7 @@
 
 namespace App\Models\CRM\Entities;
 
+use App\Models\Bitrix;
 use App\Models\CRM\Behaviors\CompanyBehavior;
 
 use App\Models\CRM\Crm;
@@ -27,6 +28,16 @@ class Company extends Crm
         if (!$company->exists) $company->guid = $data['GUID'];
         $company->setEntityBehavior(new CompanyBehavior());
         return $company;
+    }
+
+    public function addContacts(array $contactsID): void
+    {
+        $method = 'crm.company.contact.items.set';
+        $params = ['id' => $this->crm_id];
+        foreach ($contactsID as $count => $contactID) {
+            $params['items'][$count]['CONTACT_ID'] = $contactID;
+        }
+        Bitrix::request($method, $params);
     }
 
 }

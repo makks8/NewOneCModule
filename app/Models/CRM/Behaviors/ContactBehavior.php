@@ -16,13 +16,17 @@ class ContactBehavior implements EntityBehavior
     {
         $params = $contact->getParams();
         $method = $contact->getMethod();
-        $arrOfCompanies = self::checkContactCompanies($params['FIELDS']['OWNERS']);
 
-        $params['FIELDS']['COMPANY_IDS'] = $arrOfCompanies;
+        if (isset($params['FIELDS']['COMPANIES'])) {
+            $arrOfCompanies = self::checkContactCompanies($params['FIELDS']['COMPANIES']);
+            $params['FIELDS']['COMPANY_IDS'] = $arrOfCompanies;
+        }
+
         $params['FIELDS']['PHONE'] = self::getContactDataArr($params['FIELDS']['PHONE']);
         $params['FIELDS']['EMAIL'] = self::getContactDataArr($params['FIELDS']['EMAIL']);
 
         return Bitrix::request($method, $params);
+
     }
 
     public function getOneCParams($contact): array
@@ -38,7 +42,7 @@ class ContactBehavior implements EntityBehavior
         $arrOfCompanies = array();
         foreach ($arrCompanyParams as $companyKey => $companyValue){
             $company = Company::sendToCrm($companyValue);
-            array_push($arrOfCompanies, $company->crm_id);
+            array_push($arrOfCompanies, $company);
         }
         return $arrOfCompanies;
     }

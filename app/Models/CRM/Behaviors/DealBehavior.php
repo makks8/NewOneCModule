@@ -3,6 +3,7 @@
 namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
+use App\Models\CRM\Crm;
 use App\Models\CRM\Entities\Company;
 use App\Models\CRM\Entities\Product;
 use App\Models\CRM\EntityBehavior;
@@ -15,6 +16,7 @@ class DealBehavior implements EntityBehavior
         $method = $deal->getMethod();
         $productRows = $params['FIELDS']['PRODUCTS'];
         unset($params['FIELDS']['PRODUCTS']);
+        $params['FIELDS']['COMPANY_ID'] = Company::getByGuid($params['FIELDS']['COMPANY_ID'])->crm_id;
 
         $result = Bitrix::request($method, $params);
 

@@ -42,7 +42,7 @@ class ProductBehavior implements EntityBehavior
             $sectionID = self::createParentFolders($catalogSections);
         } else {
 //            $sectionID = $checkSectionResult[0]['id'];
-            $sectionID = $checkSectionResult[0]['CATALOG_ID'];
+            $sectionID = $checkSectionResult[0]['ID'];
         }
         return $sectionID;
     }

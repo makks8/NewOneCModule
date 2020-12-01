@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitrix;
+use App\Models\CRM\Additional\Timeline;
 use App\Models\CRM\Crm;
 use App\Models\CRM\Entities\Company;
 use App\Models\CRM\Entities\Contact;
@@ -13,6 +14,11 @@ use App\Models\OneC;
 
 class CRMController extends Controller
 {
+
+    public function addDeal()
+    {
+        Deal::sendToCrm(OneC::getData());
+    }
 
     public function addCompany()
     {
@@ -29,9 +35,9 @@ class CRMController extends Controller
         Product::sendToCrm(OneC::getData());
     }
 
-    public function addDeal()
+    public function addTimeline()
     {
-        Deal::sendToCrm(OneC::getData());
+        Timeline::addTimeline();
     }
 
     public function getID()
