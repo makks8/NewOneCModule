@@ -14,6 +14,15 @@ class DealBehavior implements EntityBehavior
     {
         $params = $deal->getParams();
         $method = $deal->getMethod();
+
+//        if(!empty($params['FIELDS']['ASSIGNED_EMAIL'])){
+//            $assignedByID =  self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']);
+//        } else {
+//            $assignedByID = '7';
+//        }
+//        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+
         $productRows = $params['FIELDS']['PRODUCTS'];
         unset($params['FIELDS']['PRODUCTS']);
         $params['FIELDS']['COMPANY_ID'] = Company::getByGuid($params['FIELDS']['COMPANY_ID'])->crm_id;
@@ -62,5 +71,16 @@ class DealBehavior implements EntityBehavior
         $dealParams['COMPANY'] = $company->guid;
 
         return $dealParams;
+    }
+
+    private static function getUserByEmail($email)
+    {
+        $method = 'user.get';
+        $filterData = [
+            'FILTER' => [ 'EMAIL' => $email ]
+        ];
+        $response = Bitrix::request($method, $filterData);
+        $result = (!empty($response)) ? $response[0]['ID'] : '7' ;
+        return $result;
     }
 }

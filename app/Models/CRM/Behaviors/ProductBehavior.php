@@ -51,8 +51,11 @@ class ProductBehavior implements EntityBehavior
      * @param array $params = [ 'CODE' => string, 'MEASURE_TITLE' => string, 'SYMBOL_RUS' => string ]
      * @return int
      */
-    private static function getMeasureID(array $params): int
+    private static function getMeasureID(array $params)
     {
+        if (empty($params['MEASURE_TITLE']) || empty($params['CODE'])) {
+            return null;
+        }
         $method = 'crm.measure.list';
         $filter = [
             'select' => ['ID'],

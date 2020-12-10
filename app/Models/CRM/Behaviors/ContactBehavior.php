@@ -17,6 +17,14 @@ class ContactBehavior implements EntityBehavior
         $params = $contact->getParams();
         $method = $contact->getMethod();
 
+//        if(!empty($params['FIELDS']['ASSIGNED_EMAIL'])){
+//            $assignedByID =  self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']);
+//        } else {
+//            $assignedByID = '7';
+//        }
+//        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+
         if (isset($params['FIELDS']['COMPANIES'])) {
             $arrOfCompanies = self::checkContactCompanies($params['FIELDS']['COMPANIES']);
             $params['FIELDS']['COMPANY_IDS'] = $arrOfCompanies;
@@ -59,5 +67,15 @@ class ContactBehavior implements EntityBehavior
         return $dataArr;
     }
 
+    private static function getUserByEmail($email)
+    {
+        $method = 'user.get';
+        $filterData = [
+            'EMAIL' => $email
+        ];
+        $response = Bitrix::request($method, $filterData);
+        $result = (!empty($response)) ? $response[0]['ID'] : '7' ;
+        return $result;
+    }
 
 }

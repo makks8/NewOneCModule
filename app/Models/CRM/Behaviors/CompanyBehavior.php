@@ -20,6 +20,14 @@ class CompanyBehavior implements EntityBehavior
         $companyParams = $company->getParams();
         $companySendMethod = $company->getMethod();
 
+//        if(!empty($params['FIELDS']['ASSIGNED_EMAIL'])){
+//            $assignedByID =  self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']);
+//        } else {
+//            $assignedByID = '7';
+//        }
+//        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+
         $requisiteParams = $companyParams['FIELDS']['REQUISITE'];
         $addressParams = $companyParams['FIELDS']['ADR'];
 
@@ -183,6 +191,22 @@ class CompanyBehavior implements EntityBehavior
             'fields' => $addressParams
         ];
         $test = Bitrix::request($method, $data);
+    }
+
+    private static function getUserByEmail($email)
+    {
+        $method = 'user.get';
+        $filterData = [
+            'EMAIL' => $email
+        ];
+        $response = Bitrix::request($method, $filterData);
+        $result = (!empty($response)) ? $response[0]['ID'] : '7' ;
+        return $result;
+//        if(!empty($response)){
+//            return $response[0]['ID'];
+//        } else {
+//            return '7';
+//        }
     }
 
 }
