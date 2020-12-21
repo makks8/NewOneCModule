@@ -142,12 +142,38 @@ class Crm extends Model
             foreach ($data['LIST_ELEMENTS'] as $fieldName => $fieldData) {
                 if (is_array($fieldData)) {
                     foreach ($fieldData as $key => $multipleFieldData) {
+                        $isMultiple = $multipleFieldData['is_multiple'];
+                        unset($multipleFieldData['is_multiple']);
+                        $listFields['FIELDS'] = $multipleFieldData['fields'];
+                        unset($multipleFieldData['fields']);
                         $listElement = ListElement::get($multipleFieldData);
-                        $data[$fieldName][$key] = $listElement->element_id;
+                        if (empty($listElement)) {
+                            $listFields['FIELDS']['GUID'] = $multipleFieldData['element_guid'];
+                            $listFields['IBLOCK_CODE'] = $multipleFieldData['block_code'];
+                            $listElement = ListElement::create($listFields);
+                            //$data[$fieldName] = $listElement->element_id;
+                        } else {
+                            //$data[$fieldName] = $listElement->element_id;
+                        }
+                        if($isMultiple === true){
+                            $data[$fieldName][] = $listElement->element_id;
+                        } else {
+                            $data[$fieldName] = $listElement->element_id;
+                        }
+
                     }
                 } else {
+                    $listFields['FIELDS'] = $fieldData['fields'];
+                    unset($fieldData['fields']);
                     $listElement = ListElement::get($fieldData);
-                    $data[$fieldName] = $listElement->element_id;
+                    if (empty($listElement)) {
+                        $listFields['FIELDS']['GUID'] = $fieldData['element_guid'];
+                        $listFields['IBLOCK_CODE'] = $fieldData['block_code'];
+                        $listElement = ListElement::create($listFields);
+                        $data[$fieldName] = $listElement->element_id;
+                    } else {
+                        $data[$fieldName] = $listElement->element_id;
+                    }
                 }
             }
             unset($data['LIST_ELEMENTS']);

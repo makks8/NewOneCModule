@@ -23,15 +23,16 @@ class ContactBehavior implements EntityBehavior
 //            $assignedByID = '7';
 //        }
 //        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
-        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '1';
 
         if (isset($params['FIELDS']['COMPANIES'])) {
             $arrOfCompanies = self::checkContactCompanies($params['FIELDS']['COMPANIES']);
             $params['FIELDS']['COMPANY_IDS'] = $arrOfCompanies;
         }
 
-        $params['FIELDS']['PHONE'] = self::getContactDataArr($params['FIELDS']['PHONE']);
-        $params['FIELDS']['EMAIL'] = self::getContactDataArr($params['FIELDS']['EMAIL']);
+        $params['FIELDS']['PHONE'] = isset($params['FIELDS']['PHONE']) ? self::getContactDataArr($params['FIELDS']['PHONE']) : null;
+        $params['FIELDS']['EMAIL'] = isset($params['FIELDS']['EMAIL']) ? self::getContactDataArr($params['FIELDS']['EMAIL']) : null;
+        $params['FIELDS']['WEB'] = isset($params['FIELDS']['WEB']) ? self::getContactDataArr($params['FIELDS']['WEB']) : null;
 
         return Bitrix::request($method, $params);
 
@@ -59,7 +60,7 @@ class ContactBehavior implements EntityBehavior
     {
         $dataArr = array();
         foreach ($contactData as $data) {
-            $dataArr[] = array('VALUE' => $data, 'VALUE_TYPE'=>'WORK');
+            $dataArr[] = array('VALUE' => $data['VALUE'], 'VALUE_TYPE'=>$data['VALUE_TYPE']);
         }
         if (empty($dataArr)) {
             $dataArr[] = null;

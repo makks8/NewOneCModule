@@ -26,10 +26,10 @@ class CompanyBehavior implements EntityBehavior
 //            $assignedByID = '7';
 //        }
 //        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
-        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '1';
 
-        $requisiteParams = $companyParams['FIELDS']['REQUISITE'];
-        $addressParams = $companyParams['FIELDS']['ADR'];
+        $requisiteParams = isset($companyParams['FIELDS']['REQUISITE'])? $companyParams['FIELDS']['REQUISITE'] : null;
+        $addressParams = isset($companyParams['FIELDS']['ADR'])? $companyParams['FIELDS']['ADR'] : null;
 
         if (!$company->exists) {
             $requisiteRequestData = self::getRequisiteBy($requisiteParams['RQ_INN'], 'inn');
@@ -52,6 +52,10 @@ class CompanyBehavior implements EntityBehavior
             }
             $company->addContacts($arrOfContacts);
         }
+
+        $params['FIELDS']['PHONE'] = isset($params['FIELDS']['PHONE']) ? self::getContactDataArr($params['FIELDS']['PHONE']) : null;
+        $params['FIELDS']['EMAIL'] = isset($params['FIELDS']['EMAIL']) ? self::getContactDataArr($params['FIELDS']['EMAIL']) : null;
+        $params['FIELDS']['WEB'] = isset($params['FIELDS']['WEB']) ? self::getContactDataArr($params['FIELDS']['WEB']) : null;
 
         $requisiteParams['ENTITY_ID'] = $company->exists ? $companyParams['id'] : $companySendResult;
         $requisiteParams['ENTITY_TYPE_ID'] = 4;
@@ -146,15 +150,15 @@ class CompanyBehavior implements EntityBehavior
         $test = Bitrix::request($method, $data);
     }
 
-    private static function addCompanyAddress($addressParams, $reqID)
+    private static function addCompanyAddress($addressParams = null, $reqID)
     {
         $method = 'crm.address.add';
         $data = [
             'fields' => [
-                'TYPE_ID' => 6,
+                'TYPE_ID' => $addressParams['TYPE_ID'],
                 'ENTITY_TYPE_ID' => 8,
                 'ENTITY_ID' => $reqID,
-                'ADDRESS_1' => $addressParams
+                'ADDRESS_1' => $addressParams['VALUE']
             ]
         ];
         $test = Bitrix::request($method, $data);
@@ -207,6 +211,18 @@ class CompanyBehavior implements EntityBehavior
 //        } else {
 //            return '7';
 //        }
+    }
+
+    private static function getContactDataArr(array $contactData): array
+    {
+        $dataArr = array();
+        foreach ($contactData as $data) {
+            $dataArr[] = array('VALUE' => $data['VALUE'], 'VALUE_TYPE'=>$data['VALUE_TYPE']);
+        }
+        if (empty($dataArr)) {
+            $dataArr[] = null;
+        }
+        return $dataArr;
     }
 
 }

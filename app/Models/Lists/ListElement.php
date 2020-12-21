@@ -36,6 +36,7 @@ class ListElement extends Model
         else $element->setParams($elementData['FIELDS']);
         self::setBlock($element);
         $element->add();
+        return $element;
     }
 
     public static function get($where)
