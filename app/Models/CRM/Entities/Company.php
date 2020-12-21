@@ -15,9 +15,6 @@ class Company extends Crm
     {
         $this->setEntityBehavior(new CompanyBehavior());
         parent::__construct();
-//        $data = $this->getData();
-//        $this->description = $data['NAME'];
-//        $this->guid = $data['GUID'];
     }
 
     public static function create($data)
@@ -40,4 +37,23 @@ class Company extends Crm
         Bitrix::request($method, $params);
     }
 
+    public static function setContactDataIntoParams(array $paramsFields): array
+    {
+        $paramsFields['PHONE'] = isset($paramsFields['PHONE']) ? self::getContactDataArr($paramsFields['PHONE']) : null;
+        $paramsFields['EMAIL'] = isset($paramsFields['EMAIL']) ? self::getContactDataArr($paramsFields['EMAIL']) : null;
+        $paramsFields['WEB'] = isset($paramsFields['WEB']) ? self::getContactDataArr($paramsFields['WEB']) : null;
+        return $paramsFields;
+    }
+
+    private static function getContactDataArr(array $contactData): array
+    {
+        $dataArr = array();
+        foreach ($contactData as $data) {
+            $dataArr[] = array('VALUE' => $data['VALUE'], 'VALUE_TYPE' => $data['VALUE_TYPE']);
+        }
+        if (empty($dataArr)) {
+            $dataArr[] = null;
+        }
+        return $dataArr;
+    }
 }

@@ -44,7 +44,12 @@ class Crm extends Model
         $this->save();
     }
 
-    public static function sendToCrm($data):self
+    /**
+     * Отправка сущности из 1С в Б24
+     * @param array $data - Массив данных из 1С
+     * @return static
+     */
+    public static function sendToCrm(array $data): self
     {
 
         $guid = $data['GUID'];
@@ -133,11 +138,42 @@ class Crm extends Model
         $this->entityBehavior = $entityBehavior;
     }
 
-    private function setParams($data): void
+
+    /**
+     * Преобразует массив данных из 1С
+     * в массив полей сущности Б24
+     * @param array $data
+     */
+    private function setParams(array $data): void
     {
         $this->params = array();
         if ($this->exists) $this->params['id'] = $this->crm_id;
 
+        $this->params['FIELDS'] = $this->prepareListElements($data);
+    }
+
+    #endregion
+
+
+    /**
+     * Генерирует имя сущности
+     * @param array $attributes
+     * @return array
+     */
+    private function prepareAttributesArr($attributes = [])
+    {
+        return array_merge(
+            $attributes,
+            [
+                'name' => basename(get_called_class()),
+                'client_id' => Client::getID()
+            ]
+        );
+
+    }
+
+    private function prepareListElements(array $data)
+    {
         if (key_exists('LIST_ELEMENTS', $data)) {
             foreach ($data['LIST_ELEMENTS'] as $fieldName => $fieldData) {
                 if (is_array($fieldData)) {
@@ -151,16 +187,12 @@ class Crm extends Model
                             $listFields['FIELDS']['GUID'] = $multipleFieldData['element_guid'];
                             $listFields['IBLOCK_CODE'] = $multipleFieldData['block_code'];
                             $listElement = ListElement::create($listFields);
-                            //$data[$fieldName] = $listElement->element_id;
-                        } else {
-                            //$data[$fieldName] = $listElement->element_id;
                         }
-                        if($isMultiple === true){
+                        if ($isMultiple === true) {
                             $data[$fieldName][] = $listElement->element_id;
                         } else {
                             $data[$fieldName] = $listElement->element_id;
                         }
-
                     }
                 } else {
                     $listFields['FIELDS'] = $fieldData['fields'];
@@ -178,19 +210,6 @@ class Crm extends Model
             }
             unset($data['LIST_ELEMENTS']);
         }
-        $this->params['FIELDS'] = $data;
-    }
-    #endregion
-
-    private function prepareAttributesArr($attributes = [])
-    {
-        return array_merge(
-            $attributes,
-            [
-                'name' => basename(get_called_class()),
-                'client_id' => Client::getID()
-            ]
-        );
-
+        return $data;
     }
 }
