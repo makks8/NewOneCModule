@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Bitrix;
 use App\Models\CRM\Additional\Timeline;
 use App\Models\CRM\Crm;
+use App\Models\CRM\Entities\Address;
+use App\Models\CRM\Entities\BankRequisite;
 use App\Models\CRM\Entities\Company;
 use App\Models\CRM\Entities\Contact;
 use App\Models\CRM\Entities\Deal;
 use App\Models\CRM\Entities\Product;
+use App\Models\CRM\Entities\Requisite;
 use App\Models\OneC;
 
 
@@ -38,6 +41,21 @@ class CRMController extends Controller
     public function addTimeline()
     {
         Timeline::addTimeline();
+    }
+
+    public function addRequisite()
+    {
+        Requisite::sendToCrm(OneC::getData());
+    }
+
+    public function addBankRequisite()
+    {
+        BankRequisite::sendToCrm(OneC::getData());
+    }
+
+    public function addAddress()
+    {
+        Address::sendToCrm(OneC::getData());
     }
 
     public function getID()

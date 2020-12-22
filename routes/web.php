@@ -33,6 +33,9 @@ Route::post('crm.add.product', [CRMController::class, 'addProduct']);
 Route::post('crm.add.deal', [CRMController::class, 'addDeal']);
 Route::post('crm.get.id', [CRMController::class, 'getID']);
 Route::post('crm.add.timeline', [CRMController::class, 'addTimeline']);
+Route::post('crm.add.requisite', [CRMController::class, 'addRequisite']);
+Route::post('crm.add.requisite.bankdetail', [CRMController::class, 'addBankRequisite']);
+Route::post('crm.add.address', [CRMController::class, 'addAddress']);
 #endregion
 
 #region Lists

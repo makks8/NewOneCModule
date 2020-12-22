@@ -4,8 +4,11 @@ namespace App\Models\CRM\Behaviors;
 
 use App\Models\Bitrix;
 use App\Models\CRM\Crm;
+use App\Models\CRM\Entities\Address;
+use App\Models\CRM\Entities\BankRequisite;
 use App\Models\CRM\Entities\Company;
 use App\Models\CRM\Entities\Contact;
+use App\Models\CRM\Entities\Requisite;
 use App\Models\CRM\Entities\User;
 use App\Models\CRM\EntityBehavior;
 use phpDocumentor\Reflection\Types\Mixed_;
@@ -27,19 +30,12 @@ class CompanyBehavior implements EntityBehavior
         $companyParamsFields = Company::setContactDataIntoParams($companyParamsFields);
 
         $requisiteParams = isset($companyParamsFields['REQUISITE']) ? $companyParamsFields['REQUISITE'] : null;
+        if(isset($companyParamsFields['REQUISITE'])){ unset($companyParamsFields['REQUISITE']); }
+        $bankRequisiteParams = isset($companyParamsFields['BANK_REQUISITE']) ? $companyParamsFields['BANK_REQUISITE'] : null;
+        if(isset($companyParamsFields['BANK_REQUISITE'])){ unset($companyParamsFields['BANK_REQUISITE']); }
         $addressParams = isset($companyParamsFields['ADR']) ? $companyParamsFields['ADR'] : null;
+        if(isset($companyParamsFields['ADR'])){ unset($companyParamsFields['ADR']); }
 
-        if (!$company->exists) {
-            $requisiteRequestData = self::getRequisiteBy($requisiteParams['RQ_INN'], 'inn');
-            if (!empty($requisiteRequestData)) {
-                $company->crm_id = $requisiteRequestData['ENTITY_ID'];
-                $company->save();
-                $companyParams['id'] = $requisiteRequestData['ENTITY_ID'];
-                $companySendMethod = $company->getMethod();
-            }
-        } else {
-            $requisiteRequestData = self::getRequisiteBy($companyParams['id'], 'id');
-        }
         $companyParams['FIELDS'] = $companyParamsFields;
         $companySendResult = Bitrix::request($companySendMethod, $companyParams);
 
@@ -51,25 +47,19 @@ class CompanyBehavior implements EntityBehavior
             $company->addContacts($arrOfContacts);
         }
 
-        $requisiteParams['ENTITY_ID'] = $company->exists ? $companyParams['id'] : $companySendResult;
-        $requisiteParams['ENTITY_TYPE_ID'] = 4;
-        $requisiteParams['PRESET_ID'] = 1;
-        $requisiteParams['NAME'] = 'Реквизиты из 1с';
-        if (empty($requisiteRequestData['ID'])) {
-            $requisiteID = self::addCompanyReq($requisiteParams);
-            self::addCompanyAddress($addressParams, $requisiteID);
-        } else {
-            $requisiteID = $requisiteRequestData['ID'];
-            self::updateCompanyReq($requisiteID, $requisiteParams);
+        $requisiteParams['ENTITY_ID'] = $company->exists ? $company->crm_id : $companySendResult;
 
-            $addressID = self::getAddressBy($requisiteID, 'entity');
-            if (empty($addressID)) {
-                self::addCompanyAddress($addressParams, $requisiteID);
-            } else {
-                self::updateCompanyAddress($addressID, $addressParams);
+        /* Добавление реквизитов и привзяка к ним адресов и банковских реквизитов (NEW) */
+        if(isset($requisiteParams)){
+            $requisiteID = self::checkCompanyRequisites($requisiteParams);
+            if(isset($bankRequisiteParams) && isset($requisiteID)){
+                self::checkCompanyBankRequisites($requisiteID, $bankRequisiteParams);
+            }
+            if(isset($addressParams) && isset($requisiteID)){
+                self::checkCompanyAddress($requisiteID, $addressParams);
             }
         }
-
+        /*  */
         return $companySendResult;
     }
 
@@ -91,101 +81,36 @@ class CompanyBehavior implements EntityBehavior
         return $arrOfContacts;
     }
 
-    private static function addCompanyReq($requisiteParams)
+    public function checkCompanyRequisites($arrRequisiteParams)
     {
-        $method = 'crm.requisite.add';
-        $data = [
-            'fields' => $requisiteParams
-        ];
-        Bitrix::request($method, $data);
+        $requisite = Requisite::sendToCrm($arrRequisiteParams);
+        return $requisite->crm_id;
     }
 
-    private static function getRequisiteBy($value, $type)
+    public function checkCompanyBankRequisites($requisiteID, $arrBankRequisiteParams)
     {
-        $method = 'crm.requisite.list';
-        $data = [
-            'filter' => [
-                'ENTITY_TYPE_ID' => 4
-            ]
-        ];
-        switch ($type) {
-            case 'inn':
-                $data['filter']['RQ_INN'] = $value;
-                break;
-
-            case 'id':
-                $data['filter']['ENTITY_ID'] = $value;
-                break;
-
-            default:
-                return null;
-                break;
+        $arrOfBankRequisites = array();
+        foreach ($arrBankRequisiteParams as $bankRequisiteValue) {
+            $bankRequisiteValue['ENTITY_ID'] = $requisiteID;
+            $bankRequisite = BankRequisite::sendToCrm($bankRequisiteValue);
+            array_push($arrOfBankRequisites, $bankRequisite->crm_id);
         }
-        if (empty($value)) {
-            return null;
-        }
-        $requisiteID = Bitrix::request($method, $data);
-
-        if (empty($requisiteID)) {
-            return null;
-        }
-
-        return $requisiteID[0];
+        return $arrOfBankRequisites;
     }
 
-    private static function updateCompanyReq($requisiteID, $requisiteParams)
+    public function checkCompanyAddress($requisiteID, $arrAddressParams)
     {
-        $method = 'crm.requisite.update';
-        $data = [
-            'id' => $requisiteID,
-            'fields' => $requisiteParams
-        ];
-        Bitrix::request($method, $data);
-    }
-
-    private static function addCompanyAddress($addressParams = null, $reqID)
-    {
-        $method = 'crm.address.add';
-        $data = [
-            'fields' => [
-                'TYPE_ID' => $addressParams['TYPE_ID'],
-                'ENTITY_TYPE_ID' => 8,
-                'ENTITY_ID' => $reqID,
-                'ADDRESS_1' => $addressParams['VALUE']
-            ]
-        ];
-        $test = Bitrix::request($method, $data);
-    }
-
-    private static function getAddressBy($value, $type = null)
-    {
-        $method = 'crm.address.list';
-        $data = [
-            'filter' => [
-                'ENTITY_ID' => $value,
-                'ENTITY_TYPE_ID' => 8
-            ]
-        ];
-
-        if (empty($value)) {
-            return null;
+        foreach ($arrAddressParams as $addressValue) {
+            $method = 'crm.address.add';
+            $data = [
+                'fields' => [
+                    $addressValue
+                ]
+            ];
+            $data['ENTITY_TYPE_ID'] = 8;
+            $data['ENTITY_ID'] = $requisiteID;
+            Bitrix::request($method, $data);
         }
-        $addressID = Bitrix::request($method, $data);
-
-        if (empty($addressID)) {
-            return null;
-        }
-
-        return $addressID[0];
     }
 
-    private static function updateCompanyAddress($addressID, $addressParams)
-    {
-        $method = 'crm.address.update';
-        $data = [
-            'id' => $addressID,
-            'fields' => $addressParams
-        ];
-        $test = Bitrix::request($method, $data);
-    }
 }
