@@ -89,7 +89,10 @@ class ListElement extends Model
         if (key_exists('CRM_ENTITIES', $elementData)) {
             foreach ($elementData['CRM_ENTITIES'] as $fieldName => $entityData) {
                 $entity = Crm::query()->where($entityData)->first();
-                $elementData[$fieldName] = $entity->crm_id;
+                $elementData[$fieldName] = [
+                    'type' => 'S:ECrm',
+                    'value' => $entity->crm_id
+                ];
             }
             unset($elementData['CRM_ENTITIES']);
         }

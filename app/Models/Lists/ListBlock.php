@@ -78,6 +78,9 @@ class ListBlock extends Model
         if (is_numeric($value)) {
             $type = 'N';
         }
+        /*if(!empty($value['TYPE'])){
+            $type = $value['TYPE'];
+        }*/
         $params = $this->element->getParams();
         $params['FIELDS'] = [
             'NAME' => $fieldName,
@@ -85,6 +88,16 @@ class ListBlock extends Model
             'SORT' => '500',
             'CODE' => $fieldName
         ];
+        /*if ($type === 'S:ECrm'){
+            $userTypeSettings = [
+                'COMPANY' => 'N',
+                'CONTACT' => 'N',
+                'DEAL' => 'N',
+                'LEAD' => 'N'
+            ];
+            $userTypeSettings[mb_strtoupper($this->element->name)] = 'Y';
+
+        }*/
         return Bitrix::request($method, $params);
     }
 

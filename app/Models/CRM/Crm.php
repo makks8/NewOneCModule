@@ -16,7 +16,9 @@ class Crm extends Model
     protected $fillable = [
         'name',
         'client_id',
-        'data'
+        'data',
+        'guid',
+        'crm_id'
     ];
     protected $table = 'crm';
 

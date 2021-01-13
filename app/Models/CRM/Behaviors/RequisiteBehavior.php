@@ -15,6 +15,12 @@ class RequisiteBehavior implements EntityBehavior
     public function sendToCrm(Crm $requisite)
     {
         $requisiteParams = $requisite->getParams();
+//        if(isset($requisiteParams['FIELDS']['ID'])){
+//            $requisite->crm_id = $requisiteParams['FIELDS']['ID'];
+//            $requisite->save();
+//            $requisiteParams['id'] = $requisiteParams['FIELDS']['ID'];
+//            unset($requisiteParams['FIELDS']['ID']);
+//        }
         $requisiteSendMethod = $requisite->getMethod();
         $requisiteID = Bitrix::request($requisiteSendMethod, $requisiteParams);
         if(isset($requisiteID)){

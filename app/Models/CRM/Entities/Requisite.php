@@ -15,4 +15,10 @@ class Requisite extends Crm
         parent::__construct();
 
     }
+
+    public static function fillObject(int $crmID,array $fields)
+    {
+        $requisite = new self();
+        $requisite->fill(array('crm_id'=>$crmID,'guid'=>$fields['GUID']))->save();
+    }
 }

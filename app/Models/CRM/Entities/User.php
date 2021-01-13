@@ -15,6 +15,6 @@ class User
             'EMAIL' => $email
         ];
         $response = Bitrix::request($method, $filterData);
-        return !empty($response) ? $response[0]['ID'] : '7';
+        return !empty($response) ? $response[0]['ID'] : '1';
     }
 }

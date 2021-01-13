@@ -53,7 +53,8 @@ class ProductBehavior implements EntityBehavior
      */
     private static function getMeasureID(array $params)
     {
-        if (empty($params['MEASURE_TITLE']) || empty($params['CODE'])) {
+        $params['CODE'] = intval($params['CODE']);
+        if (empty($params['MEASURE_TITLE']) || $params['CODE'] == 0) {
             return null;
         }
         $method = 'crm.measure.list';
@@ -61,7 +62,7 @@ class ProductBehavior implements EntityBehavior
             'select' => ['ID'],
             'filter' => ['CODE' => $params['CODE']]
         ];
-        $response = Bitrix::request($method, $filter)[0]['ID'];
+        $response = Bitrix::request($method, $filter)/*[0]['ID']*/;
 
         if(empty($response)){
             $method = 'crm.measure.add';
@@ -69,9 +70,10 @@ class ProductBehavior implements EntityBehavior
                 'fields' => $params
             ];
             $response = Bitrix::request($method, $filter);
+            return $response;
+        } else {
+            return $response[0]['ID'];
         }
-
-        return $response;
     }
 
     /**
@@ -85,7 +87,7 @@ class ProductBehavior implements EntityBehavior
             'select' => ['ID'],
             'filter' => ['RATE' => $params['RATE']]
         ];
-        $response = Bitrix::request($method, $filter)[0]['ID'];
+        $response = Bitrix::request($method, $filter);
 
         if(empty($response)){
             $method = 'crm.vat.add';
@@ -93,9 +95,10 @@ class ProductBehavior implements EntityBehavior
                 'fields' => $params
             ];
             $response = Bitrix::request($method, $filter);
+            return $response;
+        } else {
+            return $response[0]['ID'];
         }
-
-        return $response;
     }
 
     private static function checkCatalogSection($code)

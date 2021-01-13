@@ -21,7 +21,7 @@ class DealBehavior implements EntityBehavior
 //            $assignedByID = '7';
 //        }
 //        $params['FIELDS']['ASSIGNED_BY_ID'] = $assignedByID;
-        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '7';
+        $params['FIELDS']['ASSIGNED_BY_ID'] = (!empty($params['FIELDS']['ASSIGNED_EMAIL'])) ? self::getUserByEmail($params['FIELDS']['ASSIGNED_EMAIL']) : '1';
 
         $productRows = $params['FIELDS']['PRODUCTS'];
         unset($params['FIELDS']['PRODUCTS']);

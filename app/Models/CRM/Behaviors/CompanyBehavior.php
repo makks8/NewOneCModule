@@ -22,17 +22,35 @@ class CompanyBehavior implements EntityBehavior
     public function sendToCrm(Crm $company)
     {
         $companyParams = $company->getParams();
-        $companySendMethod = $company->getMethod();
 
         $companyParamsFields = $companyParams['FIELDS'];
+
+        if(isset($companyParamsFields['REQUISITE']['RQ_INN']) && $companyParamsFields['REQUISITE']['RQ_INN'] != ""){
+            $companyFromRequisite = self::checkCompanyByInn($companyParamsFields['REQUISITE']['RQ_INN']);
+            if($companyFromRequisite !== null){
+                $companyParams['id'] = $companyFromRequisite['ENTITY_ID'];
+                $company->crm_id = $companyFromRequisite['ENTITY_ID'];
+                $company->save();
+
+                Requisite::fillObject($companyFromRequisite['ID'],$companyParamsFields['REQUISITE']);
+
+//                $companyParamsFields['REQUISITE']['ID'] = $companyFromRequisite['ID'];
+//                $companyParamsFields['REQUISITE']['ENTITY_ID'] = $companyFromRequisite['ENTITY_ID'];
+            }
+        }
+
+        $companySendMethod = $company->getMethod();
+
         $companyParamsFields['ASSIGNED_BY_ID'] = !empty($companyParamsFields['ASSIGNED_EMAIL']) ?
             User::getByEmail($companyParamsFields['ASSIGNED_EMAIL']) : '1';
         $companyParamsFields = Company::setContactDataIntoParams($companyParamsFields);
 
         $requisiteParams = isset($companyParamsFields['REQUISITE']) ? $companyParamsFields['REQUISITE'] : null;
         if(isset($companyParamsFields['REQUISITE'])){ unset($companyParamsFields['REQUISITE']); }
+
         $bankRequisiteParams = isset($companyParamsFields['BANK_REQUISITE']) ? $companyParamsFields['BANK_REQUISITE'] : null;
         if(isset($companyParamsFields['BANK_REQUISITE'])){ unset($companyParamsFields['BANK_REQUISITE']); }
+
         $addressParams = isset($companyParamsFields['ADR']) ? $companyParamsFields['ADR'] : null;
         if(isset($companyParamsFields['ADR'])){ unset($companyParamsFields['ADR']); }
 
@@ -60,6 +78,11 @@ class CompanyBehavior implements EntityBehavior
             }
         }
         /*  */
+
+        /* Создание списка с привязкой созданной/обновленной компании */
+
+        /*  */
+
         return $companySendResult;
     }
 
@@ -87,6 +110,26 @@ class CompanyBehavior implements EntityBehavior
         return $requisite->crm_id;
     }
 
+    public function checkCompanyByInn($companyInn)
+    {
+        $method = 'crm.requisite.list';
+        $data = [
+            'order' => [ 'DATE_CREATE' => 'ASC'],
+            'filter' => [ '=RQ_INN' => $companyInn ],
+            'select' => [ 'ID', 'ENTITY_ID', 'ENTITY_TYPE_ID' ] // 4
+        ];
+        $requisites = Bitrix::request($method, $data);
+        if(!empty($requisites)){
+            foreach ($requisites as $requisite){
+                if($requisite['ENTITY_TYPE_ID'] == 4){
+                   return [ 'ID' => $requisite['ID'], 'ENTITY_ID' => $requisite['ENTITY_ID'] ];
+
+                }
+            }
+        }
+        return null;
+    }
+
     public function checkCompanyBankRequisites($requisiteID, $arrBankRequisiteParams)
     {
         $arrOfBankRequisites = array();
@@ -103,12 +146,10 @@ class CompanyBehavior implements EntityBehavior
         foreach ($arrAddressParams as $addressValue) {
             $method = 'crm.address.add';
             $data = [
-                'fields' => [
-                    $addressValue
-                ]
+                'fields' => $addressValue
             ];
-            $data['ENTITY_TYPE_ID'] = 8;
-            $data['ENTITY_ID'] = $requisiteID;
+            $data['fields']['ENTITY_TYPE_ID'] = 8;
+            $data['fields']['ENTITY_ID'] = $requisiteID;
             Bitrix::request($method, $data);
         }
     }
