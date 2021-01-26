@@ -41,7 +41,7 @@ class Client extends Model
     public function getAccessToken(): string
     {
 
-        if (time() > $this->expires_in) {
+        if (time() > $this->expires_in - 500) {
 
             $url = 'https://oauth.bitrix.info/oauth/token/?grant_type=refresh_token' .
                 '&client_id=' . $this->client_id .

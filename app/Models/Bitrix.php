@@ -10,7 +10,26 @@ class Bitrix
     {
         $url = self::createUrl($method);
         $response = Http::post($url, $data);
-        if ($response->successful()) return $response['result'];
+        if ($response->successful()){
+            return $response['result'];
+        } else {
+            $error = json_decode($response->body(),true);
+//            while($error['error'] == "QUERY_LIMIT_EXCEEDED"){
+//                usleep(1000000);
+//                $response = Http::post($url, $data);
+//                if ($response->successful()){
+//                    return $response['result'];
+//                }
+//                $error = json_decode($response->body(),true);
+//            }
+            if ($error['error'] == "QUERY_LIMIT_EXCEEDED"){
+                usleep(1000000);
+                $response = Http::post($url, $data);
+                if ($response->successful()){
+                    return $response['result'];
+                }
+            }
+        }
         return null;
     }
 

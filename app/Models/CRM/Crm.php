@@ -56,6 +56,9 @@ class Crm extends Model
 
         $guid = $data['GUID'];
         $entity = self::getByGUID($guid);
+        /*if($entity->exists){
+            return $entity;
+        }*/
         $entity->setParams($data);
         $entity->guid = $guid;
 

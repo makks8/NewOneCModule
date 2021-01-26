@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Models\Util;
+namespace App\Models;
 
 
 class Util
@@ -11,6 +11,13 @@ class Util
         $percent = $current / $total * 100;
         $percent = (int)$percent . " %<br>";
         echo $percent;
+        flush();
+        ob_flush();
+    }
+
+    public static function drawMessage($message)
+    {
+        echo $message."<br>";
         flush();
         ob_flush();
     }

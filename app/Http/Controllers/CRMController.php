@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bitrix;
+use App\Models\Client;
 use App\Models\CRM\Additional\Timeline;
 use App\Models\CRM\Crm;
 use App\Models\CRM\Entities\Address;
@@ -13,6 +14,7 @@ use App\Models\CRM\Entities\Deal;
 use App\Models\CRM\Entities\Product;
 use App\Models\CRM\Entities\Requisite;
 use App\Models\OneC;
+use App\Models\Util;
 
 
 class CRMController extends Controller
@@ -71,10 +73,49 @@ class CRMController extends Controller
         Deal::startSync();
     }
 
-    public function test()
+    public function refreshToken()
     {
-        Bitrix::request('crm.deal.get', ['id' => 515]);
+        $client = Client::getClient();
+        $client->getAccessToken();
     }
 
+    public function saveProductObject()
+    {
+        $file = file_put_contents("ProductObject.txt", json_encode(OneC::getData()));
+        return true;
+    }
+    public function loadProductObject()
+    {
+        $number = 0;//38098;
+        $productObj = json_decode(file_get_contents("ProductObject.txt"), true);
+        $count = count($productObj);
+        foreach ($productObj as $key => $value){
+            if ($key < $number){
+                continue;
+            }
+            Product::sendToCrm($value);
+            Util::drawMessage($key);
+        }
+        return true;
+    }
 
+    public function saveCompanyObject()
+    {
+        $file = file_put_contents("CompanyObject.txt", json_encode(OneC::getData()));
+        return true;
+    }
+    public function loadCompanyObject()
+    {
+        $number = 3618;
+        $companyObj = json_decode(file_get_contents("CompanyObject.txt"), true);
+        $count = count($companyObj);
+        foreach ($companyObj as $key => $value){
+            if ($key < $number){
+                continue;
+            }
+            Company::sendToCrm($value);
+            Util::drawMessage($key);
+        }
+        return true;
+    }
 }

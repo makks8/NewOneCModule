@@ -14,11 +14,11 @@ class ProductBehavior implements EntityBehavior
         $fields = $params['FIELDS'];
         $vatParams = $fields['VAT_ID'];
         $measureParams = $fields['MEASURE'];
-        $catalogSections = $fields['SECTION_ID'];
+        //$catalogSections = $fields['SECTION_ID'];
 
         $fields['VAT_ID'] = self::getVatID($vatParams);
         $fields['MEASURE'] = self::getMeasureID($measureParams);
-        $fields['SECTION_ID'] = self::getSectionID($catalogSections);
+        $fields['SECTION_ID'] = isset($fields['SECTION_ID'])? self::getSectionID($fields['SECTION_ID']) : null;
         $params['FIELDS'] = $fields;
 
         $method = $product->getMethod();
@@ -149,11 +149,13 @@ class ProductBehavior implements EntityBehavior
                 $method = 'crm.productsection.add';
                 $response = Bitrix::request($method, $sectionData);
                 $sectionID = $response;
+
             } else {
 //                $sectionID = $checkSectionResult[0]['id'];
-                $sectionID = $checkSectionResult[0]['CATALOG_ID'];
+                $sectionID = $checkSectionResult[0]['ID'];
             }
             $catalogSections[$count] = $sectionID;
+            //usleep(400000);
         }
         return end($catalogSections);
     }

@@ -26,7 +26,14 @@ Route::get('clients-list', [ClientController::class, 'renderClientList']);
 
 #region Crm
 Route::get('crm.sync', [CRMController::class, 'sync']);
-Route::get('crm.test', [CRMController::class, 'test']);
+Route::get('crm.refresh.token', [CRMController::class, 'refreshToken']);
+
+Route::post('crm.save.product', [CRMController::class, 'saveProductObject']);
+Route::get('crm.load.product', [CRMController::class, 'loadProductObject']);
+
+Route::post('crm.save.company', [CRMController::class, 'saveCompanyObject']);
+Route::get('crm.load.company', [CRMController::class, 'loadCompanyObject']);
+
 Route::post('crm.add.company', [CRMController::class, 'addCompany']);
 Route::post('crm.add.contact', [CRMController::class, 'addContact']);
 Route::post('crm.add.product', [CRMController::class, 'addProduct']);

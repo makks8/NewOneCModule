@@ -20,7 +20,7 @@ class ContactBehavior implements EntityBehavior
         $method = $contact->getMethod();
 
         $paramsFields = $params['FIELDS'];
-        $paramsFields['ASSIGNED_BY_ID'] = !empty($paramsFields['ASSIGNED_EMAIL'])
+        $paramsFields['ASSIGNED_BY_ID'] = isset($paramsFields['ASSIGNED_EMAIL'])
             ? User::getByEmail($paramsFields['ASSIGNED_EMAIL']) : '1';
 
         $paramsFields = Company::setContactDataIntoParams($paramsFields);
@@ -48,7 +48,7 @@ class ContactBehavior implements EntityBehavior
         $arrOfCompanies = array();
         foreach ($arrCompanyParams as $companyKey => $companyValue) {
             $company = Company::sendToCrm($companyValue);
-            array_push($arrOfCompanies, $company);
+            array_push($arrOfCompanies, $company->crm_id);
         }
         return $arrOfCompanies;
     }

@@ -26,22 +26,23 @@ class CompanyBehavior implements EntityBehavior
         $companyParamsFields = $companyParams['FIELDS'];
 
         if(isset($companyParamsFields['REQUISITE']['RQ_INN']) && $companyParamsFields['REQUISITE']['RQ_INN'] != ""){
-            $companyFromRequisite = self::checkCompanyByInn($companyParamsFields['REQUISITE']['RQ_INN']);
+            $companyParamsFields['REQUISITE']['RQ_KPP'] = (isset($companyParamsFields['REQUISITE']['RQ_KPP']) && $companyParamsFields['REQUISITE']['RQ_KPP'] != "") ? $companyParamsFields['REQUISITE']['RQ_KPP'] : "";
+            $companyFromRequisite = self::checkCompanyByInn($companyParamsFields['REQUISITE']['RQ_INN'], $companyParamsFields['REQUISITE']['RQ_KPP']);
             if($companyFromRequisite !== null){
                 $companyParams['id'] = $companyFromRequisite['ENTITY_ID'];
                 $company->crm_id = $companyFromRequisite['ENTITY_ID'];
                 $company->save();
 
-                Requisite::fillObject($companyFromRequisite['ID'],$companyParamsFields['REQUISITE']);
+                //Requisite::fillObject($companyFromRequisite['ID'],$companyParamsFields['REQUISITE']);
 
-//                $companyParamsFields['REQUISITE']['ID'] = $companyFromRequisite['ID'];
-//                $companyParamsFields['REQUISITE']['ENTITY_ID'] = $companyFromRequisite['ENTITY_ID'];
+                $companyParamsFields['REQUISITE']['ID'] = $companyFromRequisite['ID'];
+                $companyParamsFields['REQUISITE']['ENTITY_ID'] = $companyFromRequisite['ENTITY_ID'];
             }
         }
 
         $companySendMethod = $company->getMethod();
 
-        $companyParamsFields['ASSIGNED_BY_ID'] = !empty($companyParamsFields['ASSIGNED_EMAIL']) ?
+        $companyParamsFields['ASSIGNED_BY_ID'] = isset($companyParamsFields['ASSIGNED_EMAIL']) ?
             User::getByEmail($companyParamsFields['ASSIGNED_EMAIL']) : '1';
         $companyParamsFields = Company::setContactDataIntoParams($companyParamsFields);
 
@@ -110,12 +111,12 @@ class CompanyBehavior implements EntityBehavior
         return $requisite->crm_id;
     }
 
-    public function checkCompanyByInn($companyInn)
+    public function checkCompanyByInn($companyInn, $companyKpp)
     {
         $method = 'crm.requisite.list';
         $data = [
             'order' => [ 'DATE_CREATE' => 'ASC'],
-            'filter' => [ '=RQ_INN' => $companyInn ],
+            'filter' => [ '=RQ_INN' => $companyInn, '=RQ_KPP' => $companyKpp ],
             'select' => [ 'ID', 'ENTITY_ID', 'ENTITY_TYPE_ID' ] // 4
         ];
         $requisites = Bitrix::request($method, $data);
