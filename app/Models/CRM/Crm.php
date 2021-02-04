@@ -79,6 +79,17 @@ class Crm extends Model
 
         $entity->save();
 
+        $entityData = $entity->getParams();
+        if(isset($entityData['FIELDS']['AFTER_ENTITY_CREATE'])){
+            foreach ($entityData['FIELDS']['AFTER_ENTITY_CREATE'] as $elementData) {
+//                $elementData['FIELDS'] = $elementData['fields'];
+//                $elementData['FIELDS']['GUID'] = $elementData['element_guid'];
+//                $elementData['IBLOCK_CODE'] = $elementData['block_code'];
+//                unset($elementData['fields'], $elementData['element_guid'], $elementData['block_code']);
+                  ListElement::create($elementData);
+            }
+        }
+
         return $entity;
     }
     #endregion

@@ -42,6 +42,9 @@ class CompanyBehavior implements EntityBehavior
 
         $companySendMethod = $company->getMethod();
 
+        $listParams = isset($companyParamsFields['LIST']) ? $companyParamsFields['LIST'] : null;
+        if(isset($companyParamsFields['LIST'])){ unset($companyParamsFields['LIST']); }
+
         $companyParamsFields['ASSIGNED_BY_ID'] = isset($companyParamsFields['ASSIGNED_EMAIL']) ?
             User::getByEmail($companyParamsFields['ASSIGNED_EMAIL']) : '1';
         $companyParamsFields = Company::setContactDataIntoParams($companyParamsFields);
@@ -55,7 +58,26 @@ class CompanyBehavior implements EntityBehavior
         $addressParams = isset($companyParamsFields['ADR']) ? $companyParamsFields['ADR'] : null;
         if(isset($companyParamsFields['ADR'])){ unset($companyParamsFields['ADR']); }
 
+        $userUserFieldParams = isset($companyParamsFields['USER']) ? $companyParamsFields['USER'] : null;
+        if(isset($companyParamsFields['USER'])){ unset($companyParamsFields['USER']); }
+
         $companyParams['FIELDS'] = $companyParamsFields;
+        /*   Занесение значений в поля с привязкой к пользователям   */
+        if(!empty($userUserFieldParams)){
+            foreach($userUserFieldParams as $fieldName => $fieldValues){
+                if(is_array($fieldValues)){
+                    $users = array();
+                    foreach ($fieldValues as $values){
+                        $users[] = User::getByEmail($values);
+                    }
+                } else {
+                    $users = User::getByEmail($fieldValues);
+                }
+                $companyParams['FIELDS'][$fieldName] = $users;
+            }
+        }
+        /*   ---   */
+
         $companySendResult = Bitrix::request($companySendMethod, $companyParams);
 
         if (!empty($companySendResult) && isset($companyParamsFields['CONTACTS'])) {
@@ -78,10 +100,11 @@ class CompanyBehavior implements EntityBehavior
                 self::checkCompanyAddress($requisiteID, $addressParams);
             }
         }
+
         /*  */
-
         /* Создание списка с привязкой созданной/обновленной компании */
-
+        //$afterCompanyCreateList = isset($companyParamsFields['after_entity_create']) ? $companyParamsFields['after_entity_create'] : null;
+        //if(isset($companyParamsFields['after_entity_create'])){ unset($companyParamsFields['after_entity_create']); }
         /*  */
 
         return $companySendResult;

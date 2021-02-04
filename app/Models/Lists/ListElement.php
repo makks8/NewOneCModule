@@ -88,13 +88,54 @@ class ListElement extends Model
 
         if (key_exists('CRM_ENTITIES', $elementData)) {
             foreach ($elementData['CRM_ENTITIES'] as $fieldName => $entityData) {
-                $entity = Crm::query()->where($entityData)->first();
-                $elementData[$fieldName] = [
-                    'type' => 'S:ECrm',
-                    'value' => $entity->crm_id
-                ];
+                if(isset($entityData['name']) && isset($entityData['guid'])){
+                    $entity = Crm::query()->where($entityData)->first();
+                    $elementData[$fieldName] = $entity->crm_id;
+                } else {
+                    foreach ($entityData as $value){
+                        $entity = Crm::query()->where($value)->first();
+                        $elementData[$fieldName][] = $entity->crm_id;
+                    }
+                }
             }
             unset($elementData['CRM_ENTITIES']);
+        }
+
+        if (key_exists('LIST_ENTITIES', $elementData)) {
+            foreach ($elementData['LIST_ENTITIES'] as $fieldName => $fieldData) {
+                if (is_array($fieldData)) {
+                    foreach ($fieldData as $key => $multipleFieldData) {
+                        $isMultiple = isset($multipleFieldData['is_multiple']) ? $multipleFieldData['is_multiple'] : false;
+                        if(isset($multipleFieldData['is_multiple'])) unset($multipleFieldData['is_multiple']);
+                        $listFields['FIELDS'] = $multipleFieldData['fields'];
+                        unset($multipleFieldData['fields']);
+                        $listElement = ListElement::get($multipleFieldData);
+                        if (empty($listElement)) {
+                            $listFields['FIELDS']['GUID'] = $multipleFieldData['element_guid'];
+                            $listFields['IBLOCK_CODE'] = $multipleFieldData['block_code'];
+                            $listElement = ListElement::create($listFields);
+                        }
+                        if ($isMultiple === true) {
+                            $elementData[$key][] = $listElement->element_id;
+                        } else {
+                            $elementData[$key] = $listElement->element_id;
+                        }
+                    }
+                } else {
+                    $listFields['FIELDS'] = $fieldData['fields'];
+                    unset($fieldData['fields']);
+                    $listElement = ListElement::get($fieldData);
+                    if (empty($listElement)) {
+                        $listFields['FIELDS']['GUID'] = $fieldData['element_guid'];
+                        $listFields['IBLOCK_CODE'] = $fieldData['block_code'];
+                        $listElement = ListElement::create($listFields);
+                        $elementData[$fieldName] = $listElement->element_id;
+                    } else {
+                        $elementData[$fieldName] = $listElement->element_id;
+                    }
+                }
+            }
+            unset($elementData['LIST_ENTITIES']);
         }
 
         $this->params = array(
